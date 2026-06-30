@@ -1,0 +1,26 @@
+# Python compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# Frontend Node/Next.js folders
+node_modules/
+.next/
+out/
+build/
+dist/
+.DS_Store
+
+# Ingestion Uploads
+uploads/
+
+# Local configuration environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
