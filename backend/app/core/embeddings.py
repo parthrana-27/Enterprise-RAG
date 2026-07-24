@@ -12,6 +12,13 @@ def get_local_model():
     global _model_instance
     if _model_instance is None:
         try:
+            import os
+            # Prevent OOM crashes on memory-constrained hosting environments like Render free tier
+            if os.getenv("RENDER") == "true" or os.getenv("SKIP_LOCAL_EMBEDDINGS") == "True":
+                logger.warning("Low-resource environment detected. Skipping local SentenceTransformers loading to prevent OOM crash.")
+                _model_instance = "fallback"
+                return _model_instance
+
             from sentence_transformers import SentenceTransformer
             logger.info(f"Loading local embedding model: {settings.EMBEDDING_MODEL_NAME}")
             _model_instance = SentenceTransformer(settings.EMBEDDING_MODEL_NAME)
@@ -46,12 +53,20 @@ def get_embeddings(texts: List[str]) -> List[List[float]]:
     if settings.GEMINI_API_KEY:
         try:
             import httpx
-            # Call Google Generative Language API
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key={settings.GEMINI_API_KEY}"
+            # Determine target Gemini embedding model (defaulting to the highly compatible embedding-001)
+            gemini_model = "models/embedding-001"
+            if "embedding" in settings.EMBEDDING_MODEL_NAME:
+                gemini_model = settings.EMBEDDING_MODEL_NAME
+                if not gemini_model.startswith("models/"):
+                    gemini_model = f"models/{gemini_model}"
+
+            model_base = gemini_model.split("/")[-1]
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_base}:embedContent?key={settings.GEMINI_API_KEY}"
+
             embeddings = []
             for text in texts:
                 data = {
-                    "model": "models/text-embedding-004",
+                    "model": gemini_model,
                     "content": {"parts": [{"text": text}]}
                 }
                 response = httpx.post(url, json=data, timeout=30.0)
