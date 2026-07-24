@@ -19,8 +19,15 @@ class Settings(BaseSettings):
     POSTGRES_PORT: str = os.getenv("POSTGRES_PORT", "5432")
     POSTGRES_DB: str = os.getenv("POSTGRES_DB", "enterprise_rag")
 
+    DATABASE_URL_ENV: Optional[str] = os.getenv("DATABASE_URL", None)
+
     @property
     def DATABASE_URL(self) -> str:
+        if self.DATABASE_URL_ENV:
+            url = self.DATABASE_URL_ENV
+            if url.startswith("postgres://"):
+                url = url.replace("postgres://", "postgresql://", 1)
+            return url
         return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
 
     # Redis
