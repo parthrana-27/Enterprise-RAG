@@ -5,7 +5,7 @@ services:
     runtime: docker
     dockerContext: backend
     dockerfilePath: Dockerfile
-    plan: starter
+    plan: free
     envVars:
       - key: PORT
         value: 8000
@@ -13,16 +13,6 @@ services:
         fromDatabase:
           name: enterprise-rag-db
           property: connectionString
-      - key: REDIS_HOST
-        fromService:
-          type: redis
-          name: enterprise-rag-redis
-          property: host
-      - key: REDIS_PORT
-        fromService:
-          type: redis
-          name: enterprise-rag-redis
-          property: port
       - key: SECRET_KEY
         generateValue: true
       - key: GEMINI_API_KEY
@@ -36,14 +26,8 @@ services:
       - key: PYTHONPATH
         value: /workspace
 
-  # Redis instance for caching/queues
-  - type: redis
-    name: enterprise-rag-redis
-    plan: starter
-    ipAllowList: [] # internal connections only
-
 databases:
   # PostgreSQL database with pgvector support
   - name: enterprise-rag-db
     databaseName: enterprise_rag
-    plan: starter
+    plan: free
