@@ -46,5 +46,4 @@ databases:
   # PostgreSQL database with pgvector support
   - name: enterprise-rag-db
     databaseName: enterprise_rag
-    user: postgres
     plan: starter
