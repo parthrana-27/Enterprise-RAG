@@ -116,3 +116,7 @@ def read_root():
         "message": "Enterprise Knowledge Assistant API is running.",
         "version": settings.VERSION
     }
+
+@app.head("/")
+def read_root_head():
+    return None
