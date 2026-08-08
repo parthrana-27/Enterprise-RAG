@@ -105,6 +105,38 @@ def stream_openai(prompt: str, system_instruction: str = "") -> Generator[str, N
         logger.error(f"OpenAI streaming exception: {e}")
         yield f"[Streaming Error: {str(e)}]"
 
+def stream_ollama(prompt: str, system_instruction: str = "") -> Generator[str, None, None]:
+    """Streams completions from Ollama API."""
+    url = f"{settings.OLLAMA_BASE_URL.rstrip('/')}/api/generate"
+    
+    payload = {
+        "model": settings.OLLAMA_MODEL,
+        "prompt": prompt,
+        "system": system_instruction,
+        "options": {
+            "temperature": 0.2
+        }
+    }
+    
+    try:
+        with httpx.stream("POST", url, json=payload, timeout=60.0) as r:
+            if r.status_code != 200:
+                logger.error(f"Ollama API returned status {r.status_code}: {r.read().decode('utf-8')}")
+                yield f"[Error: Ollama API status {r.status_code}]"
+                return
+
+            for line in r.iter_lines():
+                if line:
+                    try:
+                        data = json.loads(line)
+                        if "response" in data:
+                            yield data["response"]
+                    except Exception:
+                        pass
+    except Exception as e:
+        logger.error(f"Ollama streaming exception: {e}")
+        yield f"[Streaming Error: {str(e)}]"
+
 def simulate_llm(prompt: str, context_chunks: List[Dict[str, Any]]) -> Generator[str, None, None]:
     """Simulates a highly realistic, context-grounded RAG response generator for local demo mode."""
     import time
@@ -145,5 +177,7 @@ def llm_generate_stream(prompt: str, system_instruction: str = "", context_chunk
         yield from stream_gemini(prompt, system_instruction)
     elif settings.OPENAI_API_KEY:
         yield from stream_openai(prompt, system_instruction)
+    elif settings.OLLAMA_BASE_URL:
+        yield from stream_ollama(prompt, system_instruction)
     else:
         yield from simulate_llm(prompt, context_chunks or [])

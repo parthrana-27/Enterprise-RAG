@@ -81,7 +81,26 @@ def get_embeddings(texts: List[str]) -> List[List[float]]:
         except Exception as e:
             logger.error(f"Failed calling Gemini embeddings: {e}")
 
-    # 3. Fallback to Local Sentence Transformers
+    # 3. Try Ollama if base URL exists
+    if settings.OLLAMA_BASE_URL:
+        try:
+            import httpx
+            url = f"{settings.OLLAMA_BASE_URL.rstrip('/')}/api/embed"
+            data = {
+                "model": settings.OLLAMA_EMBEDDING_MODEL,
+                "input": texts
+            }
+            response = httpx.post(url, json=data, timeout=30.0)
+            if response.status_code == 200:
+                result = response.json()
+                if "embeddings" in result:
+                    return result["embeddings"]
+            else:
+                logger.error(f"Ollama embedding error: {response.text}")
+        except Exception as e:
+            logger.error(f"Failed calling Ollama embeddings: {e}")
+
+    # 4. Fallback to Local Sentence Transformers
     model = get_local_model()
     if model != "fallback":
         try:
@@ -91,7 +110,7 @@ def get_embeddings(texts: List[str]) -> List[List[float]]:
         except Exception as e:
             logger.error(f"SentenceTransformers encode error: {e}")
 
-    # 4. Final Fallback: Generate deterministic pseudo-random dummy embeddings (so the app works without crash)
+    # 5. Final Fallback: Generate deterministic pseudo-random dummy embeddings (so the app works without crash)
     logger.warning("Using dummy/simulated embeddings.")
     dummy_embeddings = []
     for text in texts:
