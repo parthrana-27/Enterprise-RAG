@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     # Embedding Settings
     # Default is a lightweight local CPU embedding model for out-of-the-box local runs.
     EMBEDDING_MODEL_NAME: str = os.getenv("EMBEDDING_MODEL_NAME", "sentence-transformers/all-MiniLM-L6-v2")
-    EMBEDDING_DIMENSION: int = 384  # Dimension for all-MiniLM-L6-v2. If using OpenAI text-embedding-3-small, set to 1536.
+    EMBEDDING_DIMENSION: int = 768  # nomic-embed-text uses 768. all-MiniLM-L6-v2 uses 384.
 
     # Role definitions
     ROLE_EMPLOYEE: str = "Employee"
